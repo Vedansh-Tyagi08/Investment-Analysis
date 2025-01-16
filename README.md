@@ -2,4 +2,4 @@
 
 
 
-![image alt](https://github.com/Vedansh-Tyagi08/Investment-Analysis/blob/0fedc85b74f0a8e83a9aa8308e3ddee1644218bd/investment%20background.png)
+![image alt](https://github.com/Vedansh-Tyagi08/Investment-Analysis/blob/980707c5c1298f30adb0b266506c2f2bd60612b3/investment%20background.png)
