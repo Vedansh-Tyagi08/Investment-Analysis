@@ -1,0 +1,200 @@
+CREATE TABLE data
+(
+	user_id SERIAL PRIMARY KEY,
+	gender VARCHAR(10),
+	age INT,
+	investment_avenues BOOLEAN,
+	mutual_funds INT,
+	equity_market INT,
+	debentures INT,
+	government_bonds INT,
+	fixed_deposits INT,
+	ppf INT,
+	gold INT,
+	stock_market BOOLEAN,
+	factor VARCHAR(15),
+	objective VARCHAR(20),
+	purpose VARCHAR(20),
+	duration VARCHAR(30),
+	invest_monitor VARCHAR(10),
+	expect VARCHAR(10),
+	avenue VARCHAR(30),
+	saving_objectives VARCHAR(20),
+	reason_equity VARCHAR(20),
+	reason_mutual VARCHAR(20),
+	reason_bonds VARCHAR(20),
+	reason_fd VARCHAR(20),
+	source VARCHAR(30)
+);
+
+
+--------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------
+
+
+-- Task 1: Data overview --
+
+SELECT * FROM data;
+
+
+
+
+-- Task 2: Gender Distribution --
+
+SELECT gender, COUNT(gender) AS gender_count
+FROM data
+GROUP BY gender;
+
+
+
+
+-- Task 3:
+-- Average --
+
+SELECT ROUND(AVG(mutual_funds),2) AS avg_mutual_funds, 
+	   ROUND(AVG(equity_market),2) AS avg_equity_market, 
+	   ROUND(AVG(debentures),2) AS avg_debentures, 
+	   ROUND(AVG(government_bonds),2) AS avg_government_bonds, 
+	   ROUND(AVG(fixed_deposits),2) AS avg_fixed_deposits, 
+	   ROUND(AVG(ppf),2) AS avg_ppf, ROUND(AVG(gold),2) AS avg_gold
+FROM data;
+
+-- Median --
+
+WITH cte AS(
+	SELECT age, mutual_funds, equity_market, debentures, government_bonds, fixed_deposits, ppf, gold,
+		ROW_NUMBER() OVER() AS rn
+	FROM data
+	ORDER BY age ASC
+           )
+SELECT age, mutual_funds, equity_market, debentures, government_bonds, fixed_deposits, ppf, gold
+FROM cte
+WHERE rn = (SELECT COUNT(rn)/2 FROM cte);
+
+-- Standard Deviation --
+
+SELECT ROUND(STDDEV_POP(mutual_funds),2) AS std_dev__mutual_funds, 
+	ROUND(STDDEV_POP(equity_market),2) AS std_dev__equity_market,
+	ROUND(STDDEV_POP(debentures),2) AS std_dev__debentures, 
+	ROUND(STDDEV_POP(government_bonds),2) AS std_dev__government_bonds,
+	ROUND(STDDEV_POP(fixed_deposits),2) AS std_dev__fixed_deposits, 
+	ROUND(STDDEV_POP(ppf),2) AS std_dev__ppf,
+	ROUND(STDDEV_POP(gold),2) AS std_dev__gold
+FROM data;
+
+
+
+
+-- Task 4: investment avenue with the highest frequency or occurrence --
+
+SELECT avenue, COUNT(avenue) AS avenue_count
+FROM data
+GROUP BY avenue
+ORDER BY avenue_count DESC;
+
+
+
+
+-- Task 5: Investigate the column where participants provided reasons for their investment choices & identify common 
+-- themes or recurring reasons --
+
+SELECT reason_equity, COUNT(reason_equity) AS equity_reasons
+FROM data
+GROUP BY reason_equity
+ORDER BY equity_reasons DESC;
+
+SELECT reason_mutual, COUNT(reason_mutual) AS mutual_fund_reasons
+FROM data
+GROUP BY reason_mutual
+ORDER BY mutual_fund_reasons DESC;
+
+SELECT reason_bonds, COUNT(reason_bonds) AS bond_reasons
+FROM data
+GROUP BY reason_bonds
+ORDER BY bond_reasons DESC;
+
+SELECT reason_fd, COUNT(reason_fd) AS fd_reasons
+FROM data
+GROUP BY reason_fd
+ORDER BY fd_reasons DESC;
+
+
+
+
+-- Task 6: Create a list and describe the main savings objectives mentioned by participants --
+
+SELECT objective, COUNT(objective) AS objective_count
+FROM data
+GROUP BY objective
+ORDER BY objective_count DESC;
+
+
+
+
+-- Task 7: Analyze the data to identify and summarize the most common sources participants rely on --
+
+SELECT source, COUNT(source) AS source_count
+FROM data
+GROUP BY source
+ORDER BY source_count DESC;
+
+
+
+
+-- Task 8: Use appropriate statistical methods to calculate the average investment duration --
+
+WITH cte5 AS(
+	WITH cte4 AS(
+		WITH cte3 AS(
+			WITH cte2 AS(
+				WITH cte AS(
+						SELECT duration,
+							CASE WHEN duration = 'Less than 1 year' THEN 0 END AS less_than_1_yr,
+							CASE WHEN duration = '1-3 years' THEN 1 END AS minimum_1_yr,
+							CASE WHEN duration = '3-5 years' THEN 3 END AS minimum_3_yrs,
+							CASE WHEN duration = 'More than 5 years' THEN 5 END AS minimum_5_yrs
+						FROM data
+						   )
+				SELECT duration, 
+					CONCAT(less_than_1_yr,  minimum_1_yr, minimum_3_yrs, minimum_5_yrs)::INT AS approx_duration_yrs
+				FROM cte
+						)
+			SELECT duration, COUNT(approx_duration_yrs) AS total_people
+			FROM cte2
+			GROUP BY duration
+		           )
+		SELECT *,
+			CASE WHEN duration = 'Less than 1 year' THEN total_people*0 END AS total_less_than_1_yr,
+			CASE WHEN duration = '1-3 years' THEN total_people*1 END AS total_minimum_1_yr,
+			CASE WHEN duration = '3-5 years' THEN total_people*3 END AS total_minimum_3_yrs,
+			CASE WHEN duration = 'More than 5 years' THEN total_people*5 END AS total_minimum_5_yrs
+		FROM cte3
+	           )
+	SELECT duration, total_people,
+		CONCAT(total_less_than_1_yr, total_minimum_1_yr, total_minimum_3_yrs, total_minimum_5_yrs)
+																			AS total_duration_years
+	FROM cte4
+           )
+SELECT SUM(total_duration_years::INT)/(SELECT COUNT(user_id) FROM data) AS avg_investment_duration_yrs
+FROm cte5;
+
+
+
+
+-- Task 9: Summarize participant's expectations from investments --
+
+SELECT expect, COUNT(expect) expect_count
+FROM data
+GROUP BY expect
+ORDER BY expect ASC;
+
+
+
+
+-- Task 10: Identify columns such as age, investment duration, and expected returns for correlation analysis --
+
+SELECT age, duration, expect, 
+	COUNT(age) AS age_count, COUNT(duration) AS duration_count, COUNT(expect) AS expect_count
+FROM data
+GROUP BY age, duration, expect
+ORDER BY age ASC;
